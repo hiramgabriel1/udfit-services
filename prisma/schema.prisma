@@ -7,7 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Patient {
   id       String @id @default(uuid())
   username String
+  email    String
+  password String
+  weight   String
+  height   String
+  age      Int
+  gender   String
 }
