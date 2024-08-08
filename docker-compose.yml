@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  postgresDB:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=hiramdev
+      - POSTGRES_PASSWORD=udfit_password
+      - POSTGRES_DB=udfit_db
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redisDB:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6377:6377"
