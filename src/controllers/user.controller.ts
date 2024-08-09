@@ -15,7 +15,6 @@ export class UserController {
     private secret: any = process.env.SECRET_KEY;
 
     public async validateSession(data: userSession): Promise<boolean> {
-        console.log(data);
         const searchSession = await prisma.patient.findFirst({
             where: {
                 email: data.email,
@@ -27,26 +26,36 @@ export class UserController {
             data?.password
         );
 
-        return isPasswordValid ? true : false;
+        return !!isPasswordValid;
     }
 
     public async userAlreadyExists(email: string): Promise<Boolean> {
+        console.log(email);
+        
         const findUser = await prisma.patient.findFirst({
             where: {
                 email: email,
             },
         });
 
-        return findUser ? true : false;
+        console.log(findUser);
+        
+        return !!findUser
     }
 
     public async createUser(
         req: Request,
         res: Response
-    ): Promise<{ message: string; data: IPatient }> {
-        const validateUser = await this.userAlreadyExists(req.body.email);
+    ) {
+        const { email } = req.body
+
+        console.log(email);
+        
+        const validateUser = await this.userAlreadyExists(email);
         const { password, ...rest } = req.body;
 
+        console.log(validateUser);
+        
         if (validateUser) throw new Error("El usuario ya existe");
 
         const passwordHashed = await hashPassword(password);
@@ -60,8 +69,6 @@ export class UserController {
         const response = { message: "user created", data: createUser };
 
         res.json(response);
-
-        return response;
     }
 
     public async loginUser(req: Request, res: Response) {
@@ -92,35 +99,13 @@ export class UserController {
                 height: searchSession?.height,
                 age: searchSession?.age,
                 gender: searchSession?.gender,
+                role: searchSession?.role
             },
             this.secret,
             { expiresIn: "24h" }
         );
 
         res.json({ token: this.token });
-    }
-
-    public verifyToken(req: Request, res: Response) {
-        try {
-            const header = req.header('Authorization');
-            
-            if (!header) {
-                return res.status(400).json({ message: 'Authorization header not provided' });
-            }
-    
-            const token = header.split(' ')[1];
-            
-            if (!token) {
-                return res.status(400).json({ message: 'Token not provided' });
-            }
-    
-            const payload = jwt.verify(token, this.secret);
-    
-            res.json(payload);
-        } catch (error) {
-            console.error(error); 
-            return res.status(403).json({ message: 'Token is not valid' });
-        }
     }
     
     public async getUsers(req: Request, res: Response): Promise<Array<Patient>> {

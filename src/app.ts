@@ -20,7 +20,7 @@ app.use(morgan("dev"))
 app.use(limiter)
 app.use(express.json())
 app.use(cors({
-    origin: [''],
+    origin: ['http://localhost:5173', 'https://'],
     methods: 'POST, GET, PUT, PATCH, DELETE'
 }))
 

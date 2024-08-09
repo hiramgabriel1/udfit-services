@@ -12,8 +12,9 @@ model Patient {
   username String
   email    String
   password String
-  weight   String
-  height   String
+  weight   Int
+  height   Int
   age      Int
   gender   String
+  role     String 
 }
