@@ -3,6 +3,7 @@ import { prisma } from "../prisma/prisma.service";
 import { IDoctor } from "../types/IDoctor";
 import { hashPassword, comparePassword } from "../utils/hash.password";
 import jwt from "jsonwebtoken";
+import { IDieta } from "../types/IDieta";
 
 export class DoctorController {
     constructor() { }
@@ -30,8 +31,8 @@ export class DoctorController {
             const { password, ...rest } = req.body;
             const [find, passwordHashed] = await Promise.all([
                 this.findDoctor(email),
-                hashPassword(password)
-            ])
+                hashPassword(password),
+            ]);
 
             if (find)
                 return res
@@ -116,6 +117,29 @@ export class DoctorController {
         if (!doctor) return false;
 
         res.status(200).json({ message: "doctor finded", data: doctor });
+    }
+
+    public async createPatientDieta(req: Request, res: Response) {
+        const { userId } = req.params;
+        const findPatient = await prisma.patient.findFirst({
+            where: { id: userId },
+        });
+
+        if (!findPatient)
+            return res.status(404).json({ response: "patient no exists" });
+
+        const dieta: IDieta = { ...req.body };
+        const createDieta = await prisma.dietas.create({
+            data: {
+                ...dieta,
+                patientId: userId,
+            },
+        });
+
+        if (!createDieta)
+            return res.status(500).json({ message: "error in creation" });
+
+        res.status(201).json({ response: "data created" });
     }
 
     public async showDoctors(req: Request, res: Response) {

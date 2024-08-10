@@ -4,12 +4,18 @@ import { DoctorController } from "../controllers/doctor.controller";
 
 const routerDoctor = Router();
 const doctorController = new DoctorController();
-const path = "/api/v1";
+const path = "/api/v1/doctor";
 
-routerDoctor.get(`${path}/doctor/show-list`, (req, res) => doctorController.showDoctors(req, res))
+routerDoctor.get(`${path}/show-list`, (req, res) =>
+  doctorController.showDoctors(req, res)
+);
 
-routerDoctor.post(`${path}/doctor/create-doctor`, (req, res) =>
+routerDoctor.post(`${path}/create-doctor`, (req, res) =>
   doctorController.createDoctor(req, res)
+);
+
+routerDoctor.post(`${path}/dieta-create/patient/:patientId`, (req, res) =>
+  doctorController.createPatientDieta(req, res)
 );
 
 routerDoctor.get(

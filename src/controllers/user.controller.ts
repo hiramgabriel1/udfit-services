@@ -105,18 +105,12 @@ export class UserController {
     public async setDoctor(req: Request, res: Response) {
         const { userId, doctorId } = req.params;
         const [findDoctor, findPatient] = await Promise.all([
-            prisma.doctor.findFirst({
-                where: { id: doctorId },
-            }),
-            prisma.patient.findFirst({
-                where: { id: userId },
-            }),
+            prisma.doctor.findFirst({ where: { id: doctorId } }),
+            prisma.patient.findFirst({ where: { id: userId } }),
         ]);
 
-        if (!findDoctor)
-            return res.status(409).json({ response: "dc dont exists" });
-        if (!findPatient)
-            return res.status(409).json({ response: "el patient no existe" });
+        if (!(findDoctor || findPatient))
+            return res.status(409).json({ response: "doctor o paciente no existe" });
 
         const setDoctorToPatient = await prisma.patient.update({
             where: {

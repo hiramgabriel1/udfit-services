@@ -14,6 +14,7 @@ model Doctor {
   email    String
   password String
   patients Patient[] // uno a muchos
+  dietas Dietas[]
 }
 
 model Patient {
@@ -35,4 +36,6 @@ model Dietas {
   id        String  @id @default(uuid())
   patientId String
   patient   Patient @relation(fields: [patientId], references: [id])
+  doctorId  String?
+  doctor    Doctor? @relation(fields: [doctorId], references: [id])
 }
