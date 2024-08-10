@@ -70,6 +70,8 @@ export class UserController {
 
     public async loginUser(req: Request, res: Response) {
         const { email, password } = req.body;
+        console.log(req.body);
+        
         const searchSession = await prisma.patient.findFirst({
             where: {
                 email: email,
@@ -78,12 +80,15 @@ export class UserController {
 
         const isPasswordValid = await comparePassword(
             password,
-            searchSession!.password
+            searchSession?.password
         );
-
-        if (!isPasswordValid)
+        console.log(searchSession);
+        
+        if (!isPasswordValid){
+            console.log(isPasswordValid);
+            
             return res.status(401).json({ message: "Invalid password" });
-
+        }
         this.token = jwt.sign(
             {
                 userId: searchSession?.id,
