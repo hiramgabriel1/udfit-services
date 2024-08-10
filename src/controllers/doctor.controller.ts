@@ -28,14 +28,16 @@ export class DoctorController {
         try {
             const { email } = req.body;
             const { password, ...rest } = req.body;
-            const find = await this.findDoctor(email);
+            const [find, passwordHashed] = await Promise.all([
+                this.findDoctor(email),
+                hashPassword(password)
+            ])
 
             if (find)
                 return res
                     .status(409)
                     .json({ message: "el doctor ya esta registrado" });
 
-            const passwordHashed = await hashPassword(password);
             const doctor: IDoctor = {
                 ...rest,
                 password: passwordHashed,
@@ -87,15 +89,17 @@ export class DoctorController {
     }
 
     public async myPatients(req: Request, res: Response) {
-        const searchDoctor = await this.findDoctor(req.params.id);
+        const [searchDoctor, patients] = await Promise.all([
+            this.findDoctor(req.params.id),
+
+            prisma.doctor.findMany({
+                where: {
+                    id: req.params.id,
+                },
+            }),
+        ]);
 
         if (!searchDoctor) res.status(404).json({ message: "no existe el doctor" });
-
-        const patients = await prisma.doctor.findMany({
-            where: {
-                id: req.params.id,
-            },
-        });
 
         console.log(patients);
 

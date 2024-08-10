@@ -46,13 +46,15 @@ export class UserController {
 
     public async createUser(req: Request, res: Response) {
         const { email } = req.body;
-        const validateUser = await this.userAlreadyExists(email);
         const { password, ...rest } = req.body;
+        const [validateUser, passwordHashed] = await Promise.all([
+            this.userAlreadyExists(email),
+            hashPassword(password),
+        ]);
 
         if (validateUser)
             return res.status(409).json({ response: "usuario ya existe" });
 
-        const passwordHashed = await hashPassword(password);
         const user: IPatient = {
             ...rest,
             password: passwordHashed,
@@ -136,11 +138,22 @@ export class UserController {
         });
     }
 
+    public async patientProfile(req: Request, res: Response) {
+        const { userId } = req.params;
+        const searchPatient = await prisma.patient.findFirst({
+            where: { id: userId },
+        });
+
+        if (!searchPatient) return res.json({ message: "el usuario no existe" });
+
+        res.status(200).json({ response: "user finded", data: searchPatient });
+    }
+
     public async getUsers(req: Request, res: Response): Promise<Array<Patient>> {
         const response = await prisma.patient.findMany({
             include: { doctor: true },
         });
-        
+
         res.json({ count: response.length, response: response });
 
         return response;
