@@ -13,4 +13,5 @@ export interface IPatient {
     age: number
     gender: string
     role: userRoles
+    doctorId: string
 }

@@ -7,8 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Doctor {
+  id       String    @id @default(uuid())
+  username String
+  lastname String
+  email    String
+  password String
+  patients Patient[] // uno a muchos
+}
+
 model Patient {
-  id       String @id @default(uuid())
+  id       String   @id @default(uuid())
   username String
   email    String
   password String
@@ -16,5 +25,14 @@ model Patient {
   height   Int
   age      Int
   gender   String
-  role     String 
+  role     String
+  doctorId String
+  doctor   Doctor   @relation(fields: [doctorId], references: [id])
+  dietas   Dietas[]
+}
+
+model Dietas {
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
 }

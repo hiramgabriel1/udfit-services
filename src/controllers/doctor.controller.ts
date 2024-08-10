@@ -1,0 +1,126 @@
+import { Request, response, Response } from "express";
+import { prisma } from "../prisma/prisma.service";
+import { IDoctor } from "../types/IDoctor";
+import { hashPassword, comparePassword } from "../utils/hash.password";
+import jwt from "jsonwebtoken";
+
+export class DoctorController {
+    constructor() { }
+
+    private secretKey = process.env.SECRET_KEY || "";
+    private res: Response = response;
+    private messageInternalError(error: Error | unknown) {
+        console.log(error);
+        this.res.status(500).json({ message: "error interno", error: error });
+    }
+
+    private async findDoctor(email: string): Promise<boolean> {
+        const doctor = await prisma.doctor.findFirst({
+            where: {
+                email: email,
+            },
+        });
+
+        return !!doctor;
+    }
+
+    public async createDoctor(req: Request, res: Response) {
+        try {
+            const { email } = req.body;
+            const { password, ...rest } = req.body;
+            const find = await this.findDoctor(email);
+
+            if (find)
+                return res
+                    .status(409)
+                    .json({ message: "el doctor ya esta registrado" });
+
+            const passwordHashed = await hashPassword(password);
+            const doctor: IDoctor = {
+                ...rest,
+                password: passwordHashed,
+            };
+            const createDoctor = await prisma.doctor.create({
+                data: doctor,
+            });
+
+            if (createDoctor)
+                res.status(201).json({ message: "doctor created", data: createDoctor });
+        } catch (error) {
+            console.log(error);
+            return this.messageInternalError(error);
+        }
+    }
+
+    public async loginDoctor(req: Request, res: Response) {
+        try {
+            const { email, password } = req.body;
+            const searchDoctor = await prisma.doctor.findFirst({
+                where: {
+                    email: email,
+                },
+            });
+            const passwordComp = await comparePassword(
+                password,
+                searchDoctor?.password
+            );
+
+            if (!searchDoctor || !passwordComp)
+                return res.status(409).json({ message: "el doctor no existe" });
+
+            const token = jwt.sign(
+                {
+                    userId: searchDoctor.id,
+                    username: searchDoctor.username,
+                    lastname: searchDoctor.lastname,
+                    email: searchDoctor.email,
+                    password: searchDoctor.password,
+                },
+                this.secretKey,
+                { expiresIn: "24hr" }
+            );
+
+            res.json({ token: token });
+        } catch (error) {
+            return this.messageInternalError(error);
+        }
+    }
+
+    public async myPatients(req: Request, res: Response) {
+        const searchDoctor = await this.findDoctor(req.params.id);
+
+        if (!searchDoctor) res.status(404).json({ message: "no existe el doctor" });
+
+        const patients = await prisma.doctor.findMany({
+            where: {
+                id: req.params.id,
+            },
+        });
+
+        console.log(patients);
+
+        res.status(200).json({ response: "tus pacientes", data: patients });
+    }
+
+    public async myProfile(req: Request, res: Response) {
+        const doctor = await prisma.doctor.findFirst({
+            where: {
+                id: req.params.doctorId,
+            },
+        });
+
+        if (!doctor) return false;
+
+        res.status(200).json({ message: "doctor finded", data: doctor });
+    }
+
+    public async showDoctors(req: Request, res: Response) {
+        try {
+            const search = await prisma.doctor.findMany();
+
+            res.json({ count: search.length, data: search });
+        } catch (error) {
+            this.messageInternalError(error);
+        }
+    }
+}

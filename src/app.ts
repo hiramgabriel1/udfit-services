@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import routerUser from "./routes/user.route"
 import { rateLimit } from "express-rate-limit"
+import routerDoctor from "./routes/doctor.route"
 
 dotenv.config()
 const app = express()
@@ -26,5 +27,6 @@ app.use(cors({
 
 // ? endpoints
 app.use(routerUser)
+app.use(routerDoctor)
 
 export default app

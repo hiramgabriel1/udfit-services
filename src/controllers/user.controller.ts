@@ -9,6 +9,7 @@ type userSession = {
     email: string;
     password: string | undefined;
 };
+
 export class UserController {
     constructor() { }
     private token: string = "";
@@ -31,7 +32,7 @@ export class UserController {
 
     public async userAlreadyExists(email: string): Promise<Boolean> {
         console.log(email);
-        
+
         const findUser = await prisma.patient.findFirst({
             where: {
                 email: email,
@@ -39,7 +40,7 @@ export class UserController {
         });
 
         console.log(findUser);
-        
+
         return !!findUser
     }
 
@@ -48,15 +49,10 @@ export class UserController {
         res: Response
     ) {
         const { email } = req.body
-
-        console.log(email);
-        
         const validateUser = await this.userAlreadyExists(email);
         const { password, ...rest } = req.body;
 
-        console.log(validateUser);
-        
-        if (validateUser) throw new Error("El usuario ya existe");
+        if (validateUser) return res.status(409).json({ response: 'usuario ya existe' })
 
         const passwordHashed = await hashPassword(password);
         const user: IPatient = {
@@ -84,11 +80,8 @@ export class UserController {
             searchSession!.password
         );
 
-        console.log();
-
-        if (!isPasswordValid) {
+        if (!isPasswordValid)
             return res.status(401).json({ message: "Invalid password" });
-        }
 
         this.token = jwt.sign(
             {
@@ -107,7 +100,14 @@ export class UserController {
 
         res.json({ token: this.token });
     }
-    
+
+    public async setDoctor(req: Request, res: Response){
+        const { doctorId } = req.params
+
+        console.log(doctorId);
+        
+    }
+
     public async getUsers(req: Request, res: Response): Promise<Array<Patient>> {
         const response = await prisma.patient.findMany();
         res.json({ count: response.length, response: response });
