@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import { prisma } from "../prisma/prisma.service";
 import type { IPatient } from "../types/IPatient";
 import { hashPassword, comparePassword } from "../utils/hash.password";
@@ -30,7 +30,7 @@ export class UserController {
         return !!isPasswordValid;
     }
 
-    public async userAlreadyExists(email: string): Promise<Boolean> {
+    private async userAlreadyExists(email: string): Promise<Boolean> {
         console.log(email);
 
         const findUser = await prisma.patient.findFirst({
@@ -41,23 +41,22 @@ export class UserController {
 
         console.log(findUser);
 
-        return !!findUser
+        return !!findUser;
     }
 
-    public async createUser(
-        req: Request,
-        res: Response
-    ) {
-        const { email } = req.body
+    public async createUser(req: Request, res: Response) {
+        const { email } = req.body;
         const validateUser = await this.userAlreadyExists(email);
         const { password, ...rest } = req.body;
 
-        if (validateUser) return res.status(409).json({ response: 'usuario ya existe' })
+        if (validateUser)
+            return res.status(409).json({ response: "usuario ya existe" });
 
         const passwordHashed = await hashPassword(password);
         const user: IPatient = {
             ...rest,
             password: passwordHashed,
+            doctorId: undefined,
         };
         const createUser = await prisma.patient.create({
             data: user,
@@ -92,7 +91,7 @@ export class UserController {
                 height: searchSession?.height,
                 age: searchSession?.age,
                 gender: searchSession?.gender,
-                role: searchSession?.role
+                role: searchSession?.role,
             },
             this.secret,
             { expiresIn: "24h" }
@@ -101,16 +100,49 @@ export class UserController {
         res.json({ token: this.token });
     }
 
-    public async setDoctor(req: Request, res: Response){
-        const { doctorId } = req.params
+    public async setDoctor(req: Request, res: Response) {
+        const { userId, doctorId } = req.params;
+        const [findDoctor, findPatient] = await Promise.all([
+            prisma.doctor.findFirst({
+                where: { id: doctorId },
+            }),
+            prisma.patient.findFirst({
+                where: { id: userId },
+            }),
+        ]);
 
-        console.log(doctorId);
-        
+        if (!findDoctor)
+            return res.status(409).json({ response: "dc dont exists" });
+        if (!findPatient)
+            return res.status(409).json({ response: "el patient no existe" });
+
+        const setDoctorToPatient = await prisma.patient.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                doctorId: doctorId,
+            },
+        });
+
+        if (!setDoctorToPatient)
+            return res
+                .status(500)
+                .json({ response: "error al asignar doctor al paciente" });
+
+        res.status(201).json({
+            response: "doctor asignado al paciente",
+            data: setDoctorToPatient,
+        });
     }
 
     public async getUsers(req: Request, res: Response): Promise<Array<Patient>> {
-        const response = await prisma.patient.findMany();
+        const response = await prisma.patient.findMany({
+            include: { doctor: true },
+        });
+        
         res.json({ count: response.length, response: response });
+
         return response;
     }
 }

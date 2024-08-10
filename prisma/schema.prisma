@@ -26,8 +26,8 @@ model Patient {
   age      Int
   gender   String
   role     String
-  doctorId String
-  doctor   Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId String?
+  doctor   Doctor?   @relation(fields: [doctorId], references: [id])
   dietas   Dietas[]
 }
 

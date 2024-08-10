@@ -10,11 +10,11 @@ routerUser.post(`${path}/user-create`, (req, res) =>
   userController.createUser(req, res)
 );
 
-routerUser.post(`${path}user/auth-user`, (req, res) =>
+routerUser.post(`${path}/user/auth-user`, (req, res) =>
   userController.loginUser(req, res)
 );
 
-routerUser.post(`${path}/user/select-doctor/:doctorId`, (req, res) =>
+routerUser.post(`${path}/user/:userId/select-doctor/:doctorId`, (req, res) =>
   userController.setDoctor(req, res)
 );
 
