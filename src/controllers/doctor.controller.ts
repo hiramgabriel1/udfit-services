@@ -112,9 +112,12 @@ export class DoctorController {
             where: {
                 id: req.params.doctorId,
             },
+            include: {
+                patients: true
+            }
         });
 
-        if (!doctor) return false;
+        if (!doctor) return res.status(404).json({ response: 'doctor no existe' });
 
         res.status(200).json({ message: "doctor finded", data: doctor });
     }
